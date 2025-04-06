@@ -241,7 +241,6 @@ namespace TwitchLeecher.Services.Services
                 var last_progress_text = "";
                 while (true)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
                     var progress_text = chrome.FindElement(By.CssSelector("#file_0 > div.file_info_prog_box > span")).Text;
                     if (last_progress_text != progress_text)
                     {
@@ -249,20 +248,25 @@ namespace TwitchLeecher.Services.Services
                         {
                             break;
                         }
+
+                        int progressPercentage = 0;
+                        if (int.TryParse(progress_text.TrimEnd('%'), out progressPercentage))
+                        {
+                            setProgress(progressPercentage);
+                        }
+
                         last_progress_text = progress_text;
-                        int progressPercentage = int.Parse(progress_text.TrimEnd('%'));
-                        setProgress(progressPercentage);
                     }
                     Thread.Sleep(1);
                 }
 
                 var download_text_element = wait.Until(d => d.FindElement(By.CssSelector("#file_0 > div.file_info_url_box.clearfix > input.file_info_url.url")));
                 download_url = download_text_element.GetAttribute("origin");
-                cancellationToken.ThrowIfCancellationRequested();
 
                 var delkey_text_element = chrome.FindElement(By.CssSelector("#file_0 > div.file_info_url_box.clearfix > span.file_info_url.file_info_url_delkey > input.delkey"));
                 del_key = delkey_text_element.GetAttribute("origin");
 
+                setProgress(100);
                 /*
                 var matomete_link_btn = chrome.FindElement(By.Id("matomete_btn"));
                 jsexecutor.ExecuteScript("arguments[0].click();", matomete_link_btn);
@@ -276,7 +280,7 @@ namespace TwitchLeecher.Services.Services
                 var a = matomete_url_element.GetAttribute("href");
                 */
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 log(Environment.NewLine + "An error occured while uploading to gigafile.nu!" +
                     Environment.NewLine + Environment.NewLine + ex.ToString());

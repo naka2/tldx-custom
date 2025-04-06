@@ -82,7 +82,7 @@ namespace TwitchLeecher.Gui.Services
             var model = _kernel.Get<BulkDownloadViewModel>();
             model.DoUploadToGigafileBinAfterDownload = true;
             model.DoGenerateDownloadSummaryCSV = true;
-            model.DoZipDownloadFile = false;
+            model.IsChromeDriverHeadless = true;
             model.ParamsArray = downloadParamsArray ?? throw new ArgumentNullException(nameof(downloadParamsArray));
 
             Navigate(model);
