@@ -1,0 +1,54 @@
+﻿<UserControl x:Class="TwitchLeecher.Gui.Views.BulkDownloadView"
+             x:Name="control"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:TwitchLeecher.Gui.ViewModels"
+             xmlns:avalonia="https://github.com/projektanker/icons.avalonia"
+             x:DataType="viewModels:BulkDownloadViewModel">
+    <Design.DataContext>
+        <viewModels:BulkDownloadViewModel />
+    </Design.DataContext>
+	<Grid Margin="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+			<RowDefinition />
+			<RowDefinition />
+			<RowDefinition />
+			<RowDefinition />
+			<RowDefinition />
+			<RowDefinition />
+		</Grid.RowDefinitions>
+        <Border Grid.Row="0" Margin="0, 0, 0, 10" Padding="0,0,0,5" BorderThickness="0,0,0,1">
+            <TextBlock Text="Download All Videos" FontSize="21.333" FontWeight="Bold" />
+        </Border>
+		<TextBlock Grid.Row="1">Following <Run Text="{Binding ParamsArray.Count}"/> videos will be downloaded</TextBlock>
+		<ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+			<ItemsControl ItemsSource="{Binding ParamsArray}" Grid.IsSharedSizeScope="True" Margin="5">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate>
+						<WrapPanel>
+							<TextBlock>
+								<Run Text="{Binding Video.Title}"/> | <Run Text="{Binding Filename}"/>
+							</TextBlock>
+						</WrapPanel>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+				<ItemsControl.ItemsPanel>
+					<ItemsPanelTemplate>
+						<StackPanel Orientation="Vertical"></StackPanel>
+					</ItemsPanelTemplate>
+				</ItemsControl.ItemsPanel>
+			</ItemsControl>
+		</ScrollViewer>
+		<CheckBox Grid.Row="4" Margin="0,10,0,10" IsChecked="{Binding DoUploadToGigafileBinAfterDownload}">Upload downloaded file to Gigafile Bin</CheckBox>
+		<CheckBox Grid.Row="3" Margin="0,10,0,10" IsChecked="{Binding IsChromeDriverHeadless}">Run Chrome Driver with headless mode</CheckBox>
+		<CheckBox Grid.Row="5" Margin="0,10,0,10" IsChecked="{Binding DoGenerateDownloadSummaryCSV}">Create CSV for summary of downloaded file</CheckBox>
+		<Button Grid.Row="6" Command="{Binding StartDownloadCommand}" HorizontalAlignment="Left">
+			<StackPanel Orientation="Horizontal">
+				<avalonia:Icon Value="fa-solid fa-download" Margin="0,4,0,2" Width="16" Height="16"
+							   RenderTransformOrigin="0.5,0.5" />
+				<TextBlock Text="Download" VerticalAlignment="Center" Margin="5,0,0,0" />
+			</StackPanel>
+		</Button>
+	</Grid>
+</UserControl>

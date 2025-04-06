@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -9,6 +10,10 @@ using TwitchLeecher.Core.Models;
 using TwitchLeecher.Services.Interfaces;
 using TwitchLeecher.Shared.Helpers;
 using TwitchLeecher.Shared.IO;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Support.UI;
+using System.Threading;
 
 namespace TwitchLeecher.Services.Services
 {
@@ -167,6 +172,126 @@ namespace TwitchLeecher.Services.Services
                 }
             }
         }
+        public void ZipFile(Action<string> log, Action<string> setStatus, Action<double> setProgress, Action<bool> setIsIndeterminate, string sourceFile, string outputFile)
+        {
+            setStatus("Zipping file");
+            setProgress(0);
+            setIsIndeterminate(true);
+
+            log(Environment.NewLine + Environment.NewLine + "Zipping '" + sourceFile + "' to '" + outputFile + "'...");
+
+            using (FileStream zipToOpen = new FileStream(outputFile, FileMode.Create))
+            {
+                using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
+                {
+                    ZipArchiveEntry entry = archive.CreateEntryFromFile(sourceFile, Path.GetFileName(sourceFile), CompressionLevel.Optimal);
+                }
+            }
+
+            setProgress(1.0);
+            setIsIndeterminate(false);
+        }
+
+        public (string DownloadUrl, string DeleteKey) UploadToGigafileBin(Action<string> log, Action<string> setStatus, Action<double> setProgress, CancellationToken cancellationToken, bool requireHeadless, string sourceFile)
+        {
+            setStatus("Uploading file to Gigafile Bin");
+            setProgress(0);
+
+            var download_url = "";
+            var del_key = "";
+
+            log(Environment.NewLine + Environment.NewLine + "Initiating Chrome WebDriver for gigafile.nu");
+
+            ChromeDriver chrome = null;
+            try
+            {
+                var service = ChromeDriverService.CreateDefaultService();
+                service.HideCommandPromptWindow = true;
+                if (requireHeadless)
+                {
+                    var options = new ChromeOptions();
+                    options.AddArgument("--headless");
+
+                    chrome = new ChromeDriver(service, options);
+                }
+                else
+                {
+                    chrome = new ChromeDriver(service);
+                }
+                chrome.Url = "https://gigafile.nu/";
+
+                var wait = new WebDriverWait(chrome, TimeSpan.FromSeconds(10));
+                var lifetime_element = wait.Until(d => d.FindElement(By.CssSelector("li[data-lifetime-val='100']")));
+                cancellationToken.ThrowIfCancellationRequested();
+                chrome.FindElement(By.CssSelector("li[data-lifetime-val='3']"));
+                chrome.FindElement(By.CssSelector("li[data-lifetime-val='5']"));
+                chrome.FindElement(By.CssSelector("li[data-lifetime-val='7']"));
+                chrome.FindElement(By.CssSelector("li[data-lifetime-val='14']"));
+                chrome.FindElement(By.CssSelector("li[data-lifetime-val='30']"));
+                chrome.FindElement(By.CssSelector("li[data-lifetime-val='60']"));
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var jsexecutor = (IJavaScriptExecutor)chrome;
+                jsexecutor.ExecuteScript("arguments[0].click();", lifetime_element);
+
+                var file_input_element = wait.Until(d => d.FindElement(By.CssSelector("#upload_panel_button > input")));
+                cancellationToken.ThrowIfCancellationRequested();
+                file_input_element.SendKeys(sourceFile);
+
+                var last_progress_text = "";
+                while (true)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var progress_text = chrome.FindElement(By.CssSelector("#file_0 > div.file_info_prog_box > span")).Text;
+                    if (last_progress_text != progress_text)
+                    {
+                        if (progress_text == "完了！")
+                        {
+                            break;
+                        }
+                        last_progress_text = progress_text;
+                        int progressPercentage = int.Parse(progress_text.TrimEnd('%'));
+                        setProgress(progressPercentage);
+                    }
+                    Thread.Sleep(1);
+                }
+
+                var download_text_element = wait.Until(d => d.FindElement(By.CssSelector("#file_0 > div.file_info_url_box.clearfix > input.file_info_url.url")));
+                download_url = download_text_element.GetAttribute("origin");
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var delkey_text_element = chrome.FindElement(By.CssSelector("#file_0 > div.file_info_url_box.clearfix > span.file_info_url.file_info_url_delkey > input.delkey"));
+                del_key = delkey_text_element.GetAttribute("origin");
+
+                /*
+                var matomete_link_btn = chrome.FindElement(By.Id("matomete_btn"));
+                jsexecutor.ExecuteScript("arguments[0].click();", matomete_link_btn);
+
+                var alert = wait.Until(d => d.SwitchTo().Alert());
+                var t = alert.Text;
+                alert.Accept();
+
+                var matomete_url_element = chrome.FindElement(By.Id("matomete_url"));
+                var origin_value = matomete_url_element.GetAttribute("origin");
+                var a = matomete_url_element.GetAttribute("href");
+                */
+            }
+            catch(Exception ex)
+            {
+                log(Environment.NewLine + "An error occured while uploading to gigafile.nu!" +
+                    Environment.NewLine + Environment.NewLine + ex.ToString());
+            }
+            finally
+            {
+                if (chrome != null)
+                {
+                    chrome.Quit();
+                }
+            }
+
+            return (DownloadUrl: download_url, DeleteKey: del_key);
+        }
+
 
         #endregion Methods
     }

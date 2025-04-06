@@ -19,7 +19,10 @@
         <DataTemplate DataType="{x:Type vm:AuthViewModel}">
             <view:AuthView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:WelcomeViewModel}">
+		<DataTemplate DataType="{x:Type vm:BulkDownloadViewModel}">
+			<view:BulkDownloadView />
+		</DataTemplate>
+		<DataTemplate DataType="{x:Type vm:WelcomeViewModel}">
             <view:WelcomeView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:LoadingViewModel}">

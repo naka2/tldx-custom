@@ -14,7 +14,11 @@
             <DependentUpon>AuthView.axaml</DependentUpon>
             <SubType>Code</SubType>
         </Compile>
-        <Compile Update="Views\DownloadsView.axaml.cs">
+		<Compile Update="Views\BulkDownloadView.axaml.cs">
+			<DependentUpon>BulkDownloadView.axaml</DependentUpon>
+			<SubType>Code</SubType>
+		</Compile>
+		<Compile Update="Views\DownloadsView.axaml.cs">
             <DependentUpon>DownloadsView.axaml</DependentUpon>
             <SubType>Code</SubType>
         </Compile>
@@ -122,7 +126,8 @@
 
     <ItemGroup>
         <AdditionalFiles Include="Views\AuthView.axaml" />
-        <AdditionalFiles Include="Views\DownloadsView.axaml" />
+		<AdditionalFiles Include="Views\BulkDownloadView.axaml" />
+		<AdditionalFiles Include="Views\DownloadsView.axaml" />
         <AdditionalFiles Include="Views\DownloadView.axaml" />
         <AdditionalFiles Include="Views\InfoView.axaml" />
         <AdditionalFiles Include="Views\LoadingView.axaml" />
@@ -148,6 +153,7 @@
         <PackageReference Include="Deadpikle.AvaloniaProgressRing" Version="0.10.10" />
         <PackageReference Include="Projektanker.Icons.Avalonia" Version="9.6.1" />
         <PackageReference Include="System.Drawing.Common" Version="9.0.3" />
+		<PackageReference Include="Selenium.WebDriver" Version="4.31.0" />
     </ItemGroup>
     <ItemGroup>
         <Resource Include="..\Resources\Images\TL_Icon.png">

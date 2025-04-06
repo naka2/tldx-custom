@@ -18,6 +18,10 @@ namespace TwitchLeecher.Core.Models
 
         private string _folder;
         private string _filename;
+        string _csvFilePathDownloadSummary;
+        bool _doZipAfterDownload;
+        bool _doUploadToGigafileBinAfterDownload;
+        bool _doRunChromeDriverHeadless;
 
         private bool _cropStart;
         private bool _cropEnd;
@@ -211,6 +215,54 @@ namespace TwitchLeecher.Core.Models
             get
             {
                 return CroppedLength.ToDaylessString();
+            }
+        }
+
+        public string CsvFilePathDownloadSummary
+        {
+            get
+            {
+                return _csvFilePathDownloadSummary;
+            }
+            set
+            {
+                SetProperty(ref _csvFilePathDownloadSummary, value, nameof(CsvFilePathDownloadSummary));
+            }
+        }
+
+        public bool DoZipAfterDownload
+        {
+            get
+            {
+                return _doZipAfterDownload;
+            }
+            set
+            {
+                SetProperty(ref _doZipAfterDownload, value, nameof(DoZipAfterDownload));
+            }
+        }
+
+        public bool DoUploadToGigafileBinAfterDownload
+        {
+            get
+            {
+                return _doUploadToGigafileBinAfterDownload;
+            }
+            set
+            {
+                SetProperty(ref _doUploadToGigafileBinAfterDownload, value, nameof(DoUploadToGigafileBinAfterDownload));
+            }
+        }
+
+        public bool RunChromeDriverHeadless
+        {
+            get
+            {
+                return _doRunChromeDriverHeadless;
+            }
+            set
+            {
+                SetProperty(ref _doRunChromeDriverHeadless, value, nameof(RunChromeDriverHeadless));
             }
         }
 

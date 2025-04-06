@@ -165,6 +165,10 @@ namespace TwitchLeecher.Services.Services
                         string outputFile = downloadParams.FullPath;
 
                         bool disableConversion = downloadParams.DisableConversion;
+                        bool doZip = downloadParams.DoZipAfterDownload;
+                        bool isChromeDriverHeadless = downloadParams.RunChromeDriverHeadless;
+                        bool doUpload = downloadParams.DoUploadToGigafileBinAfterDownload;
+                        string summaryCsvToWrite = downloadParams.CsvFilePathDownloadSummary;
                         bool cropStart = downloadParams.CropStart;
                         bool cropEnd = downloadParams.CropEnd;
 
@@ -241,6 +245,31 @@ namespace TwitchLeecher.Services.Services
                                 cancellationToken.ThrowIfCancellationRequested();
                                 _processingService.ConvertVideo(log, setStatus, setProgress, setIsIndeterminate,
                                     concatFile, outputFile, cropInfo);
+                            }
+
+                            if (doZip)
+                            {
+                                cancellationToken.ThrowIfCancellationRequested();
+                                var outputZipFile = outputFile + ".zip";
+                                _processingService.ZipFile(log, setStatus, setProgress, setIsIndeterminate,
+                                    outputFile, outputZipFile);
+                            }
+
+                            var uploadUrl = "";
+                            var delKey = "";
+                            if (doUpload)
+                            {
+                                cancellationToken.ThrowIfCancellationRequested();
+                                var uploadResult = _processingService.UploadToGigafileBin(log, setStatus, setProgress, cancellationToken, isChromeDriverHeadless, outputFile);
+                                log(Environment.NewLine + "Upload to GigafileBin completed! Download URL: " + uploadResult.DownloadUrl + " Delete key: "+ uploadResult.DeleteKey);
+                                (uploadUrl, delKey) = (uploadResult.DownloadUrl, uploadResult.DeleteKey);
+                            }
+
+                            if (summaryCsvToWrite.Length != 0)
+                            {
+                                cancellationToken.ThrowIfCancellationRequested();
+                                var csvLine = $"{DateTime.Now},{downloadParams.Video.Title},{downloadParams.Video.Url},{downloadParams.Video.RecordedDate}, {downloadParams.Video.Views},{downloadParams.Video.Length},{downloadParams.SelectedQuality.DisplayString},{downloadParams.FullPath},{uploadUrl},{delKey}";
+                                File.AppendAllText(summaryCsvToWrite, csvLine + Environment.NewLine);
                             }
 
                             return downloadWarnings;

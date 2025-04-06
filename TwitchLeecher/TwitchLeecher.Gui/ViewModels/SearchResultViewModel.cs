@@ -1,8 +1,11 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Numerics;
 using System.Windows.Input;
+using System.Threading;
 using CommunityToolkit.Mvvm.Input;
+using DynamicData.Binding;
 using TwitchLeecher.Core.Events;
 using TwitchLeecher.Core.Models;
 using TwitchLeecher.Gui.Interfaces;
@@ -10,6 +13,10 @@ using TwitchLeecher.Gui.Types;
 using TwitchLeecher.Services.Interfaces;
 using TwitchLeecher.Shared.Commands;
 using TwitchLeecher.Shared.Events;
+using Avalonia;
+using Avalonia.Threading;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
 
 namespace TwitchLeecher.Gui.ViewModels
 {
@@ -24,14 +31,18 @@ namespace TwitchLeecher.Gui.ViewModels
         private readonly IPreferencesService _preferencesService;
         private readonly ISearchService _searchService;
         private readonly IFilenameService _filenameService;
+        private readonly INotificationService _notificationService;
 
         private readonly object _commandLockObject;
 
         private ICommand _viewCommand;
         private ICommand _downloadCommand;
+        private ICommand _bulkDownloadCommand;
         private ICommand _seachCommand;
 
         private bool _isAuthenticatedSubOnly;
+
+        private string _bulkDownloadButtonLabel;
 
         #endregion Fields
 
@@ -43,6 +54,7 @@ namespace TwitchLeecher.Gui.ViewModels
             IAuthService authService,
             IDialogService dialogService,
             INavigationService navigationService,
+            INotificationService notificationService,
             IPreferencesService preferencesService,
             ISearchService searchService,
             IFilenameService filenameService)
@@ -54,7 +66,9 @@ namespace TwitchLeecher.Gui.ViewModels
             _preferencesService = preferencesService;
             _searchService = searchService;
             _filenameService = filenameService;
+            _notificationService = notificationService;
 
+            BulkDownloadButtonLabel = "Download All Videos";
             _searchService.PropertyChanged += SearchService_PropertyChanged;
 
             _commandLockObject = new object();
@@ -88,6 +102,18 @@ namespace TwitchLeecher.Gui.ViewModels
             }
         }
 
+        public ICommand BulkDownloadCommand
+        {
+            get
+            {
+                if (_bulkDownloadCommand == null)
+                {
+                    _bulkDownloadCommand = new DelegateCommand(BulkDownloadVideo);
+                }
+                return _bulkDownloadCommand;
+            }
+        }
+
         public ICommand DownloadCommand
         {
             get
@@ -112,6 +138,20 @@ namespace TwitchLeecher.Gui.ViewModels
 
                 return _seachCommand;
             }
+        }
+
+        public string BulkDownloadButtonLabel
+        {
+            get
+            {
+                return _bulkDownloadButtonLabel;
+            }
+
+            set
+            {
+                SetProperty(ref _bulkDownloadButtonLabel, value, nameof(BulkDownloadButtonLabel));
+            }
+
         }
 
         #endregion Properties
@@ -159,6 +199,63 @@ namespace TwitchLeecher.Gui.ViewModels
                 else
                 {
                     Process.Start(video.Url.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                _dialogService.ShowAndLogException(ex);
+            }
+        }
+
+        private void BulkDownloadVideo()
+        {
+            try
+            {
+                lock (_commandLockObject)
+                {
+                    if (Videos != null && Videos.Count > 0)
+                    {
+                        var downloadParamsArray = new ObservableCollection<DownloadParameters>();
+                        foreach (TwitchVideo video in Videos)
+                        {
+                            var id = video.Id;
+
+                            var vodAuthInfo = _apiService.GetVodAuthInfo(video.Id);
+                            if (!vodAuthInfo.Privileged && vodAuthInfo.SubOnly)
+                            {
+                                continue;
+                            }
+
+                            var playlistInfo = _apiService.GetPlaylistInfo(id, vodAuthInfo);
+                            var qualities = playlistInfo.Keys.OrderBy(q => q).ToList();
+                            var currentPrefs = _preferencesService.CurrentPreferences.Clone();
+                            var selectedQuality = GetSelectedQuality(qualities, currentPrefs.DownloadDefaultQuality);
+
+                            string folder = (currentPrefs.DownloadSubfoldersForFav && _preferencesService.IsChannelInFavourites(video.Channel))
+                                            ? Path.Combine(currentPrefs.DownloadFolder, video.Channel)
+                                            : currentPrefs.DownloadFolder;
+                            string filename = _filenameService.SubstituteWildcards(currentPrefs.DownloadFileName, video, selectedQuality);
+                            filename = _filenameService.EnsureExtension(filename, currentPrefs.DownloadDisableConversion);
+
+                            var downloadParams = new DownloadParameters(video, qualities, selectedQuality, folder, filename, currentPrefs.DownloadDisableConversion);
+
+                            if (video.StartTime.HasValue)
+                            {
+                                downloadParams.CropStartTime = video.StartTime.Value;
+                            }
+
+                            downloadParamsArray.Add(downloadParams);
+                        }
+
+                        if (downloadParamsArray.Count > 0)
+                        {
+                            _navigationService.ShowBulkDownload(downloadParamsArray);
+                        }
+                        else
+                        {
+                            _dialogService.ShowMessageBox("No videos available for download.", "Download", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
                 }
             }
             catch (Exception ex)

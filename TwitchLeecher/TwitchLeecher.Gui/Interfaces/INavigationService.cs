@@ -1,4 +1,6 @@
-﻿using TwitchLeecher.Core.Models;
+﻿using System.Collections.ObjectModel;
+using DynamicData.Binding;
+using TwitchLeecher.Core.Models;
 
 namespace TwitchLeecher.Gui.Interfaces
 {
@@ -13,6 +15,8 @@ namespace TwitchLeecher.Gui.Interfaces
         void ShowSearch();
 
         void ShowSearchResults();
+
+        void ShowBulkDownload(ObservableCollection<DownloadParameters> downloadParamsArray);
 
         void ShowDownload(DownloadParameters downloadParams);
 

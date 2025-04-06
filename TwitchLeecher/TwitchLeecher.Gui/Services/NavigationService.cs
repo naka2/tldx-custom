@@ -1,4 +1,6 @@
-﻿using Ninject;
+﻿using System.Collections.ObjectModel;
+using DynamicData.Binding;
+using Ninject;
 using TwitchLeecher.Core.Models;
 using TwitchLeecher.Gui.Events;
 using TwitchLeecher.Gui.Interfaces;
@@ -71,6 +73,17 @@ namespace TwitchLeecher.Gui.Services
         {
             DownloadViewModel model = _kernel.Get<DownloadViewModel>();
             model.DownloadParams = downloadParams ?? throw new ArgumentNullException(nameof(downloadParams));
+
+            Navigate(model);
+        }
+
+        public void ShowBulkDownload(ObservableCollection<DownloadParameters> downloadParamsArray)
+        {
+            var model = _kernel.Get<BulkDownloadViewModel>();
+            model.DoUploadToGigafileBinAfterDownload = true;
+            model.DoGenerateDownloadSummaryCSV = true;
+            model.DoZipDownloadFile = false;
+            model.ParamsArray = downloadParamsArray ?? throw new ArgumentNullException(nameof(downloadParamsArray));
 
             Navigate(model);
         }
