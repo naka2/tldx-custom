@@ -73,6 +73,9 @@ namespace TwitchLeecher.Gui.Services
         {
             DownloadViewModel model = _kernel.Get<DownloadViewModel>();
             model.DownloadParams = downloadParams ?? throw new ArgumentNullException(nameof(downloadParams));
+            model.DownloadParams.DoUploadToGigafileBinAfterDownload = true;
+            model.DownloadParams.RunChromeDriverHeadless = true;
+            model.DownloadParams.DoWriteCsvFileDownloadSummary = true;
 
             Navigate(model);
         }

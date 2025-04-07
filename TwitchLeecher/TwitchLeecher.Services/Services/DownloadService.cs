@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TwitchLeecher.Core.Enums;
@@ -168,7 +169,8 @@ namespace TwitchLeecher.Services.Services
                         bool doZip = downloadParams.DoZipAfterDownload;
                         bool isChromeDriverHeadless = downloadParams.RunChromeDriverHeadless;
                         bool doUpload = downloadParams.DoUploadToGigafileBinAfterDownload;
-                        string summaryCsvToWrite = downloadParams.CsvFilePathDownloadSummary;
+                        bool doSummaryCsv = downloadParams.DoWriteCsvFileDownloadSummary;
+                        string csvPathToWrite = Path.Combine(downloadParams.Folder, "_DownloadSummary.csv");
                         bool cropStart = downloadParams.CropStart;
                         bool cropEnd = downloadParams.CropEnd;
 
@@ -265,11 +267,13 @@ namespace TwitchLeecher.Services.Services
                                 (uploadUrl, delKey) = (uploadResult.DownloadUrl, uploadResult.DeleteKey);
                             }
 
-                            if (summaryCsvToWrite.Length != 0)
+                            if (doSummaryCsv)
                             {
                                 cancellationToken.ThrowIfCancellationRequested();
                                 var csvLine = $"{DateTime.Now},{downloadParams.Video.Title},{downloadParams.Video.Url},{downloadParams.Video.RecordedDate}, {downloadParams.Video.Views},{downloadParams.Video.Length},{downloadParams.SelectedQuality.DisplayString},{downloadParams.FullPath},{uploadUrl},{delKey}";
-                                File.AppendAllText(summaryCsvToWrite, csvLine + Environment.NewLine);
+                                log(Environment.NewLine + "CSV to write: " + Environment.NewLine + csvLine);
+                                
+                                File.AppendAllText(csvPathToWrite, csvLine + Environment.NewLine, Encoding.UTF8);
                             }
 
                             return downloadWarnings;

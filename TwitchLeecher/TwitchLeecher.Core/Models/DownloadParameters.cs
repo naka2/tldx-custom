@@ -18,7 +18,7 @@ namespace TwitchLeecher.Core.Models
 
         private string _folder;
         private string _filename;
-        string _csvFilePathDownloadSummary;
+        bool _doWriteCsvFileDownloadSummary;
         bool _doZipAfterDownload;
         bool _doUploadToGigafileBinAfterDownload;
         bool _doRunChromeDriverHeadless;
@@ -218,15 +218,15 @@ namespace TwitchLeecher.Core.Models
             }
         }
 
-        public string CsvFilePathDownloadSummary
+        public bool DoWriteCsvFileDownloadSummary
         {
             get
             {
-                return _csvFilePathDownloadSummary;
+                return _doWriteCsvFileDownloadSummary;
             }
             set
             {
-                SetProperty(ref _csvFilePathDownloadSummary, value, nameof(CsvFilePathDownloadSummary));
+                SetProperty(ref _doWriteCsvFileDownloadSummary, value, nameof(DoWriteCsvFileDownloadSummary));
             }
         }
 

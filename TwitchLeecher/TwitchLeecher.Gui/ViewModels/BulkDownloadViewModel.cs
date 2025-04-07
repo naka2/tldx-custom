@@ -111,8 +111,7 @@ namespace TwitchLeecher.Gui.ViewModels
 
                 if (_doGenerateDownloadSummaryCSV)
                 {
-                    downloadParameters.CsvFilePathDownloadSummary = Path.Combine(
-                        downloadParameters.Folder, "_DownloadSummary.csv");
+                    downloadParameters.DoWriteCsvFileDownloadSummary = true;
                 }
 
                 if (_doUploadToGigafileBinAfterDownload)
